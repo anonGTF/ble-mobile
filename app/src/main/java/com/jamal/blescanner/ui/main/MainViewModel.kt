@@ -15,31 +15,41 @@ class MainViewModel @Inject constructor(
     private val api: BaseApi
 ) : BaseViewModel() {
 
-    private val _databaseDevice: MutableLiveData<List<BleDeviceModel>> = MutableLiveData()
-    val databaseDevice: LiveData<List<BleDeviceModel>>
-        get() = _databaseDevice
+    private val _sourceDeviceLists: MutableLiveData<Pair<List<BleDeviceModel>, List<BleDeviceModel>>> = MutableLiveData()
+    val sourceDeviceLists: LiveData<Pair<List<BleDeviceModel>, List<BleDeviceModel>>>
+        get() = _sourceDeviceLists
 
     private val _scannedDatabaseDevice: MutableLiveData<List<BleDeviceModel>> = MutableLiveData()
     val scannedDatabaseDevice: LiveData<List<BleDeviceModel>>
         get() = _scannedDatabaseDevice
 
-    private val _scannedDevice: MutableLiveData<List<BleDeviceModel>> = MutableLiveData()
-    val scannedDevice: LiveData<List<BleDeviceModel>>
-        get() = _scannedDevice
+    private val _scannedOtherDevice: MutableLiveData<List<BleDeviceModel>> = MutableLiveData()
+    val scannedOtherDevice: LiveData<List<BleDeviceModel>>
+        get() = _scannedOtherDevice
 
     fun getDevices() = wrapApiWithLiveData(
         apiCall = { api.getDevices() }
     )
 
     fun setDatabaseDevice(data: List<BleDeviceModel>) {
-        _databaseDevice.postValue(data)
+        val newPair = _sourceDeviceLists.value?.let {
+            Pair(data, it.second)
+        } ?: Pair(data, emptyList())
+        _sourceDeviceLists.postValue(newPair)
+    }
+
+    fun setScannedDevice(data: List<BleDeviceModel>) {
+        val newPair = _sourceDeviceLists.value?.let {
+            Pair(it.first, data)
+        } ?: Pair(emptyList(), data)
+        _sourceDeviceLists.postValue(newPair)
     }
 
     fun setScannedDatabaseDevice(data: List<BleDeviceModel>) {
         _scannedDatabaseDevice.postValue(data)
     }
 
-    fun setScannedDevice(data: List<BleDeviceModel>) {
-        _scannedDevice.postValue(data)
+    fun setScannedOtherDevice(data: List<BleDeviceModel>) {
+        _scannedOtherDevice.postValue(data)
     }
 }

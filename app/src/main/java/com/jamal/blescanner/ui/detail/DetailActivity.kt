@@ -8,6 +8,7 @@ import androidx.activity.viewModels
 import com.clj.fastble.BleManager
 import com.clj.fastble.callback.BleGattCallback
 import com.clj.fastble.callback.BleMtuChangedCallback
+import com.clj.fastble.callback.BleNotifyCallback
 import com.clj.fastble.callback.BleWriteCallback
 import com.clj.fastble.data.BleDevice
 import com.clj.fastble.exception.BleException
@@ -17,9 +18,12 @@ import com.jamal.blescanner.data.model.dto.BaseResponse
 import com.jamal.blescanner.data.model.dto.DeleteResponse
 import com.jamal.blescanner.data.model.dto.DeviceResponse
 import com.jamal.blescanner.databinding.ActivityDetailBinding
+import com.jamal.blescanner.ui.main.MainActivity
 import com.jamal.blescanner.utils.HexUtils
+import com.jamal.blescanner.utils.HexUtils.HexToInt
 import com.jamal.blescanner.utils.HexUtils.bytesToHexString
 import com.jamal.blescanner.utils.HexUtils.toBytes
+import com.jamal.blescanner.utils.NOTIFY
 import com.jamal.blescanner.utils.PREFIX_MAJOR
 import com.jamal.blescanner.utils.PREFIX_MINOR
 import com.jamal.blescanner.utils.PREFIX_NAME
@@ -103,12 +107,27 @@ class DetailActivity : BaseActivity<ActivityDetailBinding>() {
     }
 
     private fun setDeleteObserver() = setObserver<BaseResponse<DeleteResponse>>(
-        onSuccess = { showToast("device deleted") }
+        onSuccess = {
+            setTitle("Detail BLE")
+            binding.progressBar.gone()
+            showToast("device deleted")
+            goToActivity(MainActivity::class.java, null, clearIntent = true, isFinish = true)
+        },
+        onError = {
+            setTitle("Detail BLE")
+            binding.progressBar.gone()
+            showToast(it.message.toString())
+        },
+        onLoading = {
+            setTitle("Deleting...")
+            binding.progressBar.visible()
+        }
     )
 
     private fun handleConnect() {
         val progressDialog = ProgressDialog(this)
-        progressDialog.setTitle("Connecting...")
+        progressDialog.setTitle("Please wait")
+        progressDialog.setMessage("Connecting to the device")
         BleManager.getInstance().connect(data.mac, object : BleGattCallback() {
             override fun onStartConnect() {
                 progressDialog.show()
@@ -126,9 +145,12 @@ class DetailActivity : BaseActivity<ActivityDetailBinding>() {
                 gatt: BluetoothGatt?,
                 status: Int
             ) {
+                if (bleDevice == null) {
+                    showToast("Device not found!")
+                    return
+                }
                 progressDialog.dismiss()
                 showToast("Successfully connected!")
-                this@DetailActivity.bleDevice = bleDevice
 
                 editMode = true
                 binding.llAction.gone()
@@ -137,7 +159,7 @@ class DetailActivity : BaseActivity<ActivityDetailBinding>() {
                 binding.svEdit.visible()
 
                 BleManager.getInstance().requestConnectionPriority(bleDevice, 1)
-                setMtu(50)
+                setMtu(bleDevice, 50)
                 Log.d("coba", "onConnectSuccess: $status $gatt $bleDevice")
             }
 
@@ -170,12 +192,25 @@ class DetailActivity : BaseActivity<ActivityDetailBinding>() {
                 .observe(this, setSaveObserver())
         }
         reset()
-        BleManager.getInstance().disableBluetooth()
-        BleManager.getInstance().enableBluetooth()
     }
 
     private fun setSaveObserver() = setObserver<BaseResponse<DeviceResponse>>(
-        onSuccess = { showToast("Device saved") }
+        onSuccess = {
+            setTitle("Detail BLE")
+            binding.progressBar.gone()
+            showToast("Device saved")
+            it.data?.content?.device?.let { device -> data = device }
+            populateData()
+        },
+        onError = {
+            setTitle("Detail BLE")
+            binding.progressBar.gone()
+            showToast(it.message.toString())
+        },
+        onLoading = {
+            setTitle("Saving...")
+            binding.progressBar.visible()
+        }
     )
 
     private fun reset() {
@@ -186,7 +221,7 @@ class DetailActivity : BaseActivity<ActivityDetailBinding>() {
         binding.svEdit.gone()
     }
 
-    private fun setMtu(mtu: Int) {
+    private fun setMtu(bleDevice: BleDevice, mtu: Int) {
         BleManager.getInstance().setMtu(bleDevice, mtu, object : BleMtuChangedCallback() {
             override fun onSetMTUFailure(exception: BleException?) {
                 showToast("Set MTU Failed")
@@ -196,8 +231,127 @@ class DetailActivity : BaseActivity<ActivityDetailBinding>() {
             override fun onMtuChanged(mtu: Int) {
                 showToast("Successfully changed MTU: $mtu")
                 Log.d("coba", "onMtuChanged: $mtu")
+                setupNotify(bleDevice)
             }
 
+        })
+    }
+
+    private fun setupNotify(bleDevice: BleDevice) {
+        BleManager.getInstance().notify(bleDevice, UUID, NOTIFY, object : BleNotifyCallback() {
+            override fun onNotifySuccess() {
+                this@DetailActivity.bleDevice = bleDevice
+                showToast("Success Open Operation Notification!")
+            }
+
+            override fun onNotifyFailure(exception: BleException?) {
+                showToast("Failed Open Operation Notification!")
+            }
+
+            override fun onCharacteristicChanged(data: ByteArray?) {
+                val bytesToHexString = bytesToHexString(data)
+                val type = HexToInt(bytesToHexString!!.substring(2, 4))
+                val value = if (bytesToHexString.length > 6) HexToInt(
+                    bytesToHexString.substring(6, 8)
+                ) else 0
+                Log.d(
+                    "coba",
+                    "onCharacteristicChanged: $bytesToHexString type: $type value: $value"
+                )
+                if (type != 22) {
+                    when (type) {
+                        1 -> {
+                            if (value == 0) {
+                                showToast("Modify Password success")
+                                return
+                            } else {
+                                showToast("Modify Password failure")
+                                return
+                            }
+                        }
+
+                        2 -> {
+                            if (value == 0) {
+                                showToast("Modify UUID success")
+                                return
+                            } else {
+                                showToast("Modify UUID failure")
+                                return
+                            }
+                        }
+
+                        3 -> {
+                            if (value == 0) {
+                                showToast("Modify Major success")
+                                return
+                            } else {
+                                showToast("Modify Major failure")
+                                return
+                            }
+                        }
+
+                        4 -> {
+                            if (value == 0) {
+                                showToast("Modify Minor success")
+                                return
+                            } else {
+                                showToast("Modify Minor failure")
+                                return
+                            }
+                        }
+
+                        5 -> {
+                            if (value == 0) {
+                                showToast("Modify Name success")
+                                return
+                            } else {
+                                showToast("Modify Name failure")
+                                return
+                            }
+                        }
+
+                        6 -> {
+                            if (value == 0) {
+                                showToast("修改发射功率成功")
+                                return
+                            } else {
+                                showToast("修改发射功率失败")
+                                return
+                            }
+                        }
+
+                        7 -> {
+                            if (value == 0) {
+                                showToast("修改广播间隔成功")
+                                return
+                            } else {
+                                showToast("修改广播间隔失败")
+                                return
+                            }
+                        }
+
+                        8 -> {
+                            if (value == 0) {
+                                showToast("修改一米处Rssi成功")
+                                return
+                            } else {
+                                showToast("修改一米处Rssi失败")
+                                return
+                            }
+                        }
+
+                        9 -> {
+                            if (value == 0) {
+                                showToast("修改Mac成功")
+                                return
+                            } else {
+                                showToast("修改Mac失败")
+                                return
+                            }
+                        }
+                    }
+                }
+            }
         })
     }
 
@@ -212,12 +366,10 @@ class DetailActivity : BaseActivity<ActivityDetailBinding>() {
             false,
             object : BleWriteCallback() {
                 override fun onWriteSuccess(i2: Int, i3: Int, bArr: ByteArray) {
-                    showToast("Successfully edit $name")
                     Log.d("TAG", "send successfully" + bytesToHexString(bArr))
                 }
 
                 override fun onWriteFailure(bleException: BleException) {
-                    showToast("Failed to edit $name")
                     Log.e("TAG", "failed to send ${bleException.description}")
                 }
             })

@@ -37,7 +37,6 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
     private lateinit var scannerCallback: ScanCallback
     private val sectionPagerAdapter by lazy { SectionPagerAdapter(this) }
     private val scannerFilter: MutableList<ScanFilter> = mutableListOf()
-    private val scannedDevices: MutableList<BleDeviceModel> = mutableListOf()
     private var isScanning = false
     private var isFirstTime = true
     private val viewModel: MainViewModel by viewModels()
@@ -49,7 +48,8 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
         setupTabLayout()
         setupBluetoothHelper()
         setupAction()
-        viewModel.databaseDevice.observe(this) { setDatabaseDeviceObserver(it) }
+        viewModel.getDevices().observe(this@MainActivity, setDevicesObserver())
+        viewModel.sourceDeviceLists.observe(this) { setDeviceListsObserver(it) }
     }
 
     @SuppressLint("MissingPermission")
@@ -77,7 +77,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
 
             override fun onBatchScanResults(results: MutableList<ScanResult>) {
                 super.onBatchScanResults(results)
-                scannedDevices.clear()
+                val scannedDevices: MutableList<BleDeviceModel> = mutableListOf()
                 results.forEach { result ->
 
                     if (result.device.type != BluetoothDevice.DEVICE_TYPE_LE) return@forEach
@@ -103,8 +103,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
                     val (major, minor, uuid) = manufacturerDataList.getOrDefault(0, Triple(0,0,""))
                     scannedDevices.add(BleDeviceModel(result.device.hashCode(), result.device.name, result.device.toString(), major, minor, uuid, result.rssi, 0, ""))
                 }
-
-                getDevices()
+                viewModel.setScannedDevice(scannedDevices)
             }
         }
     }
@@ -162,39 +161,47 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
         return false
     }
 
-    private fun getDevices() {
-//        if (isFirstTime) viewModel.getDevices().observe(this@MainActivity, setDevicesObserver())
-//        isFirstTime = false
-        viewModel.getDevices().observe(this@MainActivity, setDevicesObserver())
+    override fun onResume() {
+        super.onResume()
+        viewModel.getDevices().observe(this, setDevicesObserver())
     }
 
     private fun setDevicesObserver() = setObserver<BaseResponse<DevicesResponse>>(
         onSuccess = {
+            setTitle("Smart Warehouse")
+            binding.scanProgressBar.gone()
             val data = it.data?.content?.devices.orEmpty()
             viewModel.setDatabaseDevice(data)
         },
         onError = {
+            setTitle("Smart Warehouse")
+            binding.scanProgressBar.gone()
             showToast(it.message.toString())
         },
         onLoading = {
-            showToast("loading")
+            setTitle("Loading from DB...")
+            binding.scanProgressBar.visible()
         }
     )
 
-    private fun setDatabaseDeviceObserver(data: List<BleDeviceModel>) {
-        val macMap = data.associateBy { it.mac }
-        val databaseDevices = scannedDevices.filter { it.mac in macMap }
-        val otherDevices = scannedDevices.filterNot { it.mac in macMap }
+    private fun setDeviceListsObserver(data: Pair<List<BleDeviceModel>, List<BleDeviceModel>>) {
+        val (database, scanned) = data
+        Log.d("coba", "setDeviceListsObserver: $database $scanned")
+        if (database.isNotEmpty() && scanned.isNotEmpty()) {
+            val macMap = database.associateBy { it.mac }
+            val databaseDevices = scanned.filter { it.mac in macMap }
+            val otherDevices = scanned.filterNot { it.mac in macMap }
 
-        databaseDevices.forEach { device ->
-            macMap[device.mac]?.let { updatedDevice ->
-                device.id = updatedDevice.id
-                device.rackNo = updatedDevice.rackNo
-                device.password = updatedDevice.password
+            databaseDevices.forEach { device ->
+                macMap[device.mac]?.let { updatedDevice ->
+                    device.id = updatedDevice.id
+                    device.rackNo = updatedDevice.rackNo
+                    device.password = updatedDevice.password
+                }
             }
-        }
 
-        viewModel.setScannedDatabaseDevice(databaseDevices)
-        viewModel.setScannedDevice(otherDevices)
+            viewModel.setScannedDatabaseDevice(databaseDevices)
+            viewModel.setScannedOtherDevice(otherDevices)
+        }
     }
 }

@@ -30,7 +30,7 @@ class DeviceListFragment(
                 deviceAdapter.differ.submitList(it)
             }
         } else {
-            viewModel.scannedDevice.observe(this) {
+            viewModel.scannedOtherDevice.observe(this) {
                 Log.d("coba", "setup: scannedDevice $it")
                 deviceAdapter.differ.submitList(it)
             }
