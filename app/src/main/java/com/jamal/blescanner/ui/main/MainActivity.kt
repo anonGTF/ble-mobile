@@ -11,6 +11,7 @@ import android.view.MenuItem
 import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
 import androidx.core.util.forEach
+import com.clj.fastble.BleManager
 import com.google.android.material.tabs.TabLayoutMediator
 import com.jamal.blescanner.R
 import com.jamal.blescanner.base.BaseActivity
@@ -130,6 +131,8 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
                         binding.btnStartScan.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.red))
                         binding.scanProgressBar.visible()
                         setTitle("Scanning...")
+                        BleManager.getInstance().disableBluetooth()
+                        BleManager.getInstance().enableBluetooth()
                         scanner.startScan(scannerFilter, scannerSetting, scannerCallback)
                     }
                     isScanning = !isScanning

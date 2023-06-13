@@ -5,6 +5,8 @@ import android.bluetooth.BluetoothGatt
 import android.util.Log
 import android.view.LayoutInflater
 import androidx.activity.viewModels
+import androidx.core.widget.addTextChangedListener
+import com.afollestad.vvalidator.form
 import com.clj.fastble.BleManager
 import com.clj.fastble.callback.BleGattCallback
 import com.clj.fastble.callback.BleMtuChangedCallback
@@ -12,6 +14,7 @@ import com.clj.fastble.callback.BleNotifyCallback
 import com.clj.fastble.callback.BleWriteCallback
 import com.clj.fastble.data.BleDevice
 import com.clj.fastble.exception.BleException
+import com.jamal.blescanner.R
 import com.jamal.blescanner.base.BaseActivity
 import com.jamal.blescanner.data.model.BleDeviceModel
 import com.jamal.blescanner.data.model.dto.BaseResponse
@@ -85,17 +88,53 @@ class DetailActivity : BaseActivity<ActivityDetailBinding>() {
         binding.btnConnect.setOnClickListener { handleConnect() }
         binding.btnSave.setOnClickListener { handleSave() }
         binding.btnCancel.setOnClickListener { reset() }
-        binding.btnSaveName.setOnClickListener {
-            val name = binding.etName.text.toString()
-            write(HexUtils.str2Hex(name), PREFIX_NAME, 24)
+
+        form {
+            useRealTimeValidation(disableSubmit = true)
+            input(binding.etName, name = null) {
+                isNotEmpty().description("Nama tidak boleh kosong")
+                length().atMost(12).description("Nama tidak boleh lebih dari 12 digit")
+                assert("Jika sama, tidak perlu diganti") {
+                    it.text.toString() != data.name
+                }
+            }
+
+            submitWith(binding.btnSaveName.id) {
+                val name = binding.etName.text.toString()
+                write(HexUtils.str2Hex(name), PREFIX_NAME, 24)
+            }
         }
-        binding.btnSaveMajor.setOnClickListener {
-            val major = binding.etMajor.text.toString()
-            write(HexUtils.IntToHex(major), PREFIX_MAJOR, 4, true)
+
+        form {
+            useRealTimeValidation(disableSubmit = true)
+            input(binding.etMajor, name = null) {
+                isNotEmpty().description("Major tidak boleh kosong")
+                isNumber().atMost(65535).description("Major maksimal 65535")
+                assert("Jika sama, tidak perlu diganti") {
+                    it.text.toString() != data.major.toString()
+                }
+            }
+
+            submitWith(binding.btnSaveMajor.id) {
+                val major = binding.etMajor.text.toString()
+                write(HexUtils.IntToHex(major), PREFIX_MAJOR, 4, true)
+            }
         }
-        binding.btnSaveMinor.setOnClickListener {
-            val minor = binding.etMinor.text.toString()
-            write(HexUtils.IntToHex(minor), PREFIX_MINOR, 4, true)
+
+        form {
+            useRealTimeValidation(disableSubmit = true)
+            input(binding.etMinor, name = null) {
+                isNotEmpty().description("Minor tidak boleh kosong")
+                isNumber().atMost(65535).description("Minor maksimal 65535")
+                assert("Jika sama, tidak perlu diganti") {
+                    it.text.toString() != data.minor.toString()
+                }
+            }
+
+            submitWith(binding.btnSaveMinor.id) {
+                val minor = binding.etMinor.text.toString()
+                write(HexUtils.IntToHex(minor), PREFIX_MINOR, 4, true)
+            }
         }
     }
 
