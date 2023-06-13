@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
 import com.jamal.blescanner.SmartWarehouseApplication
+import com.jamal.blescanner.data.preferences.PrefConstants.PREF_EXPIRED_MILLIS
 import com.jamal.blescanner.data.preferences.PrefConstants.PREF_KEY
 import com.jamal.blescanner.data.preferences.PrefConstants.PREF_LOGGED_IN
 import com.jamal.blescanner.data.preferences.PrefConstants.PREF_REFRESH_TOKEN
@@ -22,6 +23,9 @@ class Preferences private constructor() {
     val refreshToken: String?
         get() = instance.mPrefs.getString(PREF_REFRESH_TOKEN, "")
 
+    val expiredMillis: Long
+        get() = instance.mPrefs.getLong(PREF_EXPIRED_MILLIS, 0L)
+
     val userID: Int
         get() = instance.mPrefs.getInt(PREF_USER_ID, 0)
 
@@ -38,6 +42,11 @@ class Preferences private constructor() {
 
     fun saveRefreshToken(value: String?) {
         mEdit.putString(PREF_REFRESH_TOKEN, value)
+        mEdit.apply()
+    }
+
+    fun saveExpiredMillis(value: Long) {
+        mEdit.putLong(PREF_EXPIRED_MILLIS, value)
         mEdit.apply()
     }
 

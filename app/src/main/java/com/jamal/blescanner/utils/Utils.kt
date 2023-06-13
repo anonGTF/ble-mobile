@@ -26,7 +26,9 @@ object Utils {
         return Calendar.getInstance().time
     }
 
-    fun getTimeMillis() = System.currentTimeMillis().toString()
+    fun Long?.orZero() = this ?: 0L
+
+    fun getTimeMillis() = System.currentTimeMillis()
 
     fun ByteArray.toUuid(): String {
         val hexChars = "0123456789ABCDEF"
