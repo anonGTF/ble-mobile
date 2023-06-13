@@ -3,6 +3,8 @@ package com.jamal.blescanner.ui.main
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat
+import com.jamal.blescanner.R
 import com.jamal.blescanner.base.BaseAdapter
 import com.jamal.blescanner.data.model.BleDeviceModel
 import com.jamal.blescanner.databinding.ItemBleDeviceLayoutBinding
@@ -20,6 +22,13 @@ class BleDeviceAdapter : BaseAdapter<ItemBleDeviceLayoutBinding, BleDeviceModel>
             tvMajor.text = item.major.toString()
             tvMinor.text = item.minor.toString()
             tvDistance.text = "${item.rssi}dB"
+            tvRackNo.text = item.rackNo.toString()
+            cvDistance.setCardBackgroundColor(ContextCompat.getColor(this.root.context, getColorIndicator(item.rssi)))
         }
     }
+
+    private fun getColorIndicator(rssi: Int): Int =
+        if (rssi >= -40) R.color.green
+        else if (rssi >= -70) R.color.orange
+        else R.color.red
 }

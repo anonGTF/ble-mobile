@@ -15,23 +15,57 @@
             android:layout_height="match_parent"
             android:orientation="horizontal">
 
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cv_distance"
+            <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="6dp"
-                app:cardCornerRadius="12dp"
-                app:cardBackgroundColor="@android:color/holo_purple"
-                android:layout_gravity="center">
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:id="@+id/img_ble"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:src="@drawable/ic_ble"
+                    android:layout_marginTop="6dp"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"/>
+
+                <TextView
+                    android:id="@+id/tv_rack_no"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    tools:text="24"
+                    android:textStyle="bold"
+                    android:textColor="@color/black"
+                    app:layout_constraintTop_toTopOf="@id/img_ble"
+                    app:layout_constraintBottom_toBottomOf="@id/img_ble"
+                    app:layout_constraintStart_toStartOf="@id/img_ble"
+                    app:layout_constraintEnd_toEndOf="@id/img_ble"/>
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cv_distance"
+                    android:layout_width="12dp"
+                    android:layout_height="12dp"
+                    android:layout_marginHorizontal="6dp"
+                    app:cardCornerRadius="12dp"
+                    app:cardBackgroundColor="@color/green"
+                    android:layout_gravity="center"
+                    app:layout_constraintTop_toBottomOf="@id/img_ble"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"/>
 
                 <TextView
                     android:id="@+id/tv_distance"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:padding="12dp"
-                    android:textColor="@color/white"
+                    android:textColor="@color/black"
+                    android:layout_marginStart="6dp"
+                    android:textSize="11sp"
+                    app:layout_constraintTop_toTopOf="@id/cv_distance"
+                    app:layout_constraintBottom_toBottomOf="@id/cv_distance"
+                    app:layout_constraintStart_toEndOf="@id/cv_distance"
                     tools:text="-6.7dBm" />
-            </com.google.android.material.card.MaterialCardView>
+            </androidx.constraintlayout.widget.ConstraintLayout>
 
             <LinearLayout
                 android:layout_width="0dp"

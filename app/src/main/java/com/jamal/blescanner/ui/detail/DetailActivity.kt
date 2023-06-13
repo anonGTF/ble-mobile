@@ -11,6 +11,7 @@ import com.clj.fastble.BleManager
 import com.clj.fastble.callback.BleGattCallback
 import com.clj.fastble.callback.BleMtuChangedCallback
 import com.clj.fastble.callback.BleNotifyCallback
+import com.clj.fastble.callback.BleRssiCallback
 import com.clj.fastble.callback.BleWriteCallback
 import com.clj.fastble.data.BleDevice
 import com.clj.fastble.exception.BleException
