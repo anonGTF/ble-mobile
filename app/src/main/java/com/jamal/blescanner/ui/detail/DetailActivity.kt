@@ -19,6 +19,7 @@ import com.jamal.blescanner.data.model.dto.DeleteResponse
 import com.jamal.blescanner.data.model.dto.DeviceResponse
 import com.jamal.blescanner.databinding.ActivityDetailBinding
 import com.jamal.blescanner.ui.main.MainActivity
+import com.jamal.blescanner.utils.DEFAULT_PASSWORD
 import com.jamal.blescanner.utils.HexUtils
 import com.jamal.blescanner.utils.HexUtils.HexToInt
 import com.jamal.blescanner.utils.HexUtils.bytesToHexString
@@ -27,10 +28,12 @@ import com.jamal.blescanner.utils.NOTIFY
 import com.jamal.blescanner.utils.PREFIX_MAJOR
 import com.jamal.blescanner.utils.PREFIX_MINOR
 import com.jamal.blescanner.utils.PREFIX_NAME
+import com.jamal.blescanner.utils.PREFIX_PASSWORD
 import com.jamal.blescanner.utils.UUID
 import com.jamal.blescanner.utils.Utils.orFalse
 import com.jamal.blescanner.utils.WRITE
 import dagger.hilt.android.AndroidEntryPoint
+import java.util.Locale
 
 
 @AndroidEntryPoint
@@ -84,15 +87,15 @@ class DetailActivity : BaseActivity<ActivityDetailBinding>() {
         binding.btnCancel.setOnClickListener { reset() }
         binding.btnSaveName.setOnClickListener {
             val name = binding.etName.text.toString()
-            write(HexUtils.str2Hex(name), "name", PREFIX_NAME, 24)
+            write(HexUtils.str2Hex(name), PREFIX_NAME, 24)
         }
         binding.btnSaveMajor.setOnClickListener {
             val major = binding.etMajor.text.toString()
-            write(HexUtils.IntToHex(major), "major", PREFIX_MAJOR, 4, true)
+            write(HexUtils.IntToHex(major), PREFIX_MAJOR, 4, true)
         }
         binding.btnSaveMinor.setOnClickListener {
             val minor = binding.etMinor.text.toString()
-            write(HexUtils.IntToHex(minor), "minor", PREFIX_MINOR, 4, true)
+            write(HexUtils.IntToHex(minor), PREFIX_MINOR, 4, true)
         }
     }
 
@@ -242,6 +245,7 @@ class DetailActivity : BaseActivity<ActivityDetailBinding>() {
             override fun onNotifySuccess() {
                 this@DetailActivity.bleDevice = bleDevice
                 showToast("Success Open Operation Notification!")
+                if (!isSaved) write(DEFAULT_PASSWORD.lowercase(), PREFIX_PASSWORD, 12)
             }
 
             override fun onNotifyFailure(exception: BleException?) {
@@ -355,7 +359,7 @@ class DetailActivity : BaseActivity<ActivityDetailBinding>() {
         })
     }
 
-    private fun write(value: String, name: String, prefix: String, length: Int, isPrefixed: Boolean = false) {
+    private fun write(value: String, prefix: String, length: Int, isPrefixed: Boolean = false) {
         val data = prefix + HexUtils.addZeroForNum(value, length, isPrefixed)
         Log.d("coba", "send data: $data")
         BleManager.getInstance().write(
