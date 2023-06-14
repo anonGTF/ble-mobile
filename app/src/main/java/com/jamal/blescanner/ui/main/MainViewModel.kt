@@ -15,8 +15,8 @@ class MainViewModel @Inject constructor(
     private val api: BaseApi
 ) : BaseViewModel() {
 
-    private val _sourceDeviceLists: MutableLiveData<Pair<List<BleDeviceModel>, List<BleDeviceModel>>> = MutableLiveData()
-    val sourceDeviceLists: LiveData<Pair<List<BleDeviceModel>, List<BleDeviceModel>>>
+    private val _sourceDeviceLists: MutableLiveData<Pair<List<BleDeviceModel>?, List<BleDeviceModel>?>> = MutableLiveData()
+    val sourceDeviceLists: LiveData<Pair<List<BleDeviceModel>?, List<BleDeviceModel>?>>
         get() = _sourceDeviceLists
 
     private val _scannedDatabaseDevice: MutableLiveData<List<BleDeviceModel>> = MutableLiveData()
@@ -34,14 +34,14 @@ class MainViewModel @Inject constructor(
     fun setDatabaseDevice(data: List<BleDeviceModel>) {
         val newPair = _sourceDeviceLists.value?.let {
             Pair(data, it.second)
-        } ?: Pair(data, emptyList())
+        } ?: Pair(data, null)
         _sourceDeviceLists.postValue(newPair)
     }
 
     fun setScannedDevice(data: List<BleDeviceModel>) {
         val newPair = _sourceDeviceLists.value?.let {
             Pair(it.first, data)
-        } ?: Pair(emptyList(), data)
+        } ?: Pair(null, data)
         _sourceDeviceLists.postValue(newPair)
     }
 

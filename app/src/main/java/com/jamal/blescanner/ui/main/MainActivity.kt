@@ -104,6 +104,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
                     val (major, minor, uuid) = manufacturerDataList.getOrDefault(0, Triple(0,0,""))
                     scannedDevices.add(BleDeviceModel(result.device.hashCode(), result.device.name, result.device.toString(), major, minor, uuid, result.rssi, 0, ""))
                 }
+                Log.d("coba", "onBatchScanResults: $scannedDevices")
                 viewModel.setScannedDevice(scannedDevices)
             }
         }
@@ -187,10 +188,10 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
         }
     )
 
-    private fun setDeviceListsObserver(data: Pair<List<BleDeviceModel>, List<BleDeviceModel>>) {
+    private fun setDeviceListsObserver(data: Pair<List<BleDeviceModel>?, List<BleDeviceModel>?>) {
         val (database, scanned) = data
         Log.d("coba", "setDeviceListsObserver: $database $scanned")
-        if (database.isNotEmpty() && scanned.isNotEmpty()) {
+        if (database != null && scanned != null) {
             val macMap = database.associateBy { it.mac }
             val databaseDevices = scanned.filter { it.mac in macMap }
             val otherDevices = scanned.filterNot { it.mac in macMap }
@@ -202,6 +203,8 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
                     device.password = updatedDevice.password
                 }
             }
+
+            Log.d("coba", "setDeviceListsObserver result: $databaseDevices $otherDevices")
 
             viewModel.setScannedDatabaseDevice(databaseDevices)
             viewModel.setScannedOtherDevice(otherDevices)
