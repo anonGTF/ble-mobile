@@ -112,13 +112,20 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
 
     @SuppressLint("MissingPermission", "NewApi")
     private fun setupAction() {
+        val permissions = mutableListOf(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        )
+        if (android.os.Build.VERSION.SDK_INT > 30) {
+            permissions.add(Manifest.permission.BLUETOOTH_SCAN)
+            permissions.add(Manifest.permission.BLUETOOTH_CONNECT)
+        } else {
+            permissions.add(Manifest.permission.BLUETOOTH)
+            permissions.add(Manifest.permission.BLUETOOTH_ADMIN)
+        }
         binding.btnStartScan.setOnClickListener {
             askPermissions(
-                Manifest.permission.BLUETOOTH,
-//                Manifest.permission.BLUETOOTH_SCAN,
-                Manifest.permission.ACCESS_COARSE_LOCATION,
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.BLUETOOTH_ADMIN,
+                *permissions.toTypedArray(),
                 onAccepted = {
                     if (isScanning) {
                         binding.btnStartScan.setImageDrawable(resources.getDrawable(R.drawable.ic_play_arrow))
